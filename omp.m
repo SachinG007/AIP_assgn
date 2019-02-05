@@ -41,6 +41,6 @@ while r_norm.^2 > ep && count < 20%random num
 end
 
 nze = nnz(theta);
-fprintf('Sparsity of reconstructed theta : %d.\n', nze)
+%fprintf('Sparsity of reconstructed theta : %d.\n', nze)
 
 end
