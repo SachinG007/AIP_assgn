@@ -1,4 +1,4 @@
-rng(1) %seed set
+
 %Read Input
 input = double(imread('barbara256.png'));
 input = padarray(input,[8,8]);
@@ -9,8 +9,6 @@ input = padarray(input,[8,8]);
 %%
 %Generate phi matrix
 phi = normrnd(0,1,[32,64]);
-U = kron(dctmtx(8)',dctmtx(8)');
-A = phi * U;
 
 %%
 final_img = zeros(h,w);
@@ -26,7 +24,7 @@ for i=1:h-8
         y = phi * v_sub_img; %this acts as the input to the reconstruction algo
         
         %Reconstruction
-        result = ista(y,A);
+        result = ista_c_haar(y,phi);
         result = U * result;
         result = reshape(result,[8,8])';
         
@@ -39,9 +37,10 @@ end
 final_img = final_img/64.0;
 subplot(2,1,1);
 imshow(mat2gray(input(:,:)));
-title('Original Image')
 subplot(2,1,2);
 imshow(mat2gray(final_img(:,:)));
-title('Reconstructed CS Image')    
+    
 %%
-rmse = norm(input - final_img)/norm(input)
+oinput = double(imread('barbara256.png'));
+oinput = padarray(oinput,[8,8]);
+rmse = norm(oinput - final_img)/norm(oinput)

@@ -1,14 +1,20 @@
-function ans = soft(y,lambda)
-
-% if y>=lambda
-%     ans = y-lambda;
+function ans = soft(term1,lambda)
+% var = zeros(64,1);
+% for i=1:64
 %     
-% elseif y<= -1 * lambda
-%     ans = y + lambda;
-%     
-% else
-%     ans = zeros(size(y));
-ans = sign(y).*(max(0,abs(y)-lambda));
+%     if term1(i)>=lambda
+%         var(i) = term1(i)-lambda;
+% 
+%     elseif term1(i)<= -1 * lambda
+%         var(i) = term1(i) + lambda;
+% 
+%     else
+%         var(i) = 0;
+%     end
+% end
+% 
+% ans = var
+ans = sign(term1).*(max(0,abs(term1)-lambda));
 end
 
     

@@ -1,14 +1,22 @@
 rng(1) %seed set
 %Read Input
 input = double(imread('barbara256.png'));
+
 input = padarray(input,[8,8]);
-[h,w] = size(input)
-%Add noise
-% noise = normrnd(0,2,[h,w]);
-% input = input + noise;
+oinput = input;
+[h,w] = size(input);
+%Add noiseclear
+noise = normrnd(0,2,[h,w]);
+noise = noise - min(min(noise));
+noise = noise/max(max(noise));
+noise = noise * 2-;
+input = input + noise;
+% J = imnoise(input,'gaussian',0,0.02)
+subplot(1,2,1);
+imshow(mat2gray(input));
 %%
 %Generate phi matrix
-phi = normrnd(0,1,[32,64]);
+phi = eye(32,64);
 U = kron(dctmtx(8)',dctmtx(8)');
 A = phi * U;
 
@@ -34,14 +42,13 @@ for i=1:h-8
     
     end
 end
-
 %%
 final_img = final_img/64.0;
-subplot(2,1,1);
+subplot(1,2,1);
 imshow(mat2gray(input(:,:)));
-title('Original Image')
-subplot(2,1,2);
+title('Noisy Input Image std_dev=2')
+subplot(1,2,2);
 imshow(mat2gray(final_img(:,:)));
-title('Reconstructed CS Image')    
+title('Output of ISTA')    
 %%
-rmse = norm(input - final_img)/norm(input)
+rmse = norm(oinput - final_img)/norm(oinput)
