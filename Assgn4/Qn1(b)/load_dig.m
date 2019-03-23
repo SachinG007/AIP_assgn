@@ -1,6 +1,5 @@
 %Hyperparams
-pause on
-N = 6000;
+N = 600;
 p = 16*16;
 K = 128;
 f = 0.01;
@@ -19,6 +18,12 @@ phi = randi(2,N,m,p);
 phi(phi==2) = -1;
 phi = phi/sqrt(m);
 
+phi_concat = zeros(m,p*N);
+for k = 1:N
+    phi_concat(:,(k-1)*p+1:k*p) = reshape(phi(k,:,:),m,p);
+end
+
+
 temp = 0;
 for k = 1:N
     phi_t = reshape(phi(k,:,:),m,p);
@@ -35,16 +40,17 @@ end
 
 done = 1
 
-%%
-Dr = normrnd(0,1,[p,K]);
 
+Dr = normrnd(0,1,[p,K]);
+%%
 for iter = 1:10
     iter
     
     %OMP for Coefficients estimate
     sparse_codes = zeros(K,N);
     for k = 1:N
-        phi_t = reshape(phi(k,:,:),m,p);
+%         phi_t = reshape(phi(k,:,:),m,p);
+        phi_t = phi_concat(:,(k-1)*p+1:k*p);
         sparse_codes(:,k) = OMP2(phi_t*Dr,y(:,k),40);
     end
 
@@ -67,7 +73,8 @@ for iter = 1:10
                 end
             end
             
-            phi_t = reshape(phi(i,:,:),m,p);
+%             phi_t = reshape(phi(i,:,:),m,p);
+            phi_t = phi_concat(:,(i-1)*p+1:i*p);
             yik = y(:,i) - phi_t*d_temp;
             yikt = yik * sparse_codes(k,i);
 
@@ -90,9 +97,9 @@ for k = 1:N
 end
 rmse = rmse/N
 
-Dr_img = reshape(Dr,16,16,1,K);
+% Dr_img = reshape(Dr,16,16,1,K);
 % imgs = reshape(imgs,16,16,1,N);
-montage(Dr_img)
+% montage(Dr_img)
 
 end
 
@@ -101,3 +108,6 @@ Dr_img = reshape(Dr,16,16,1,K);
 % imgs = reshape(imgs,16,16,1,N);
 montage(Dr_img)
 % done =1
+
+img = reshape(rec_signals(:,1000),16,16);
+imshow(img)
