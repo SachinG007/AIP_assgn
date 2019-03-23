@@ -43,7 +43,7 @@ done = 1
 
 Dr = normrnd(0,1,[p,K]);
 %%
-for iter = 1:10
+for iter = 1:30
     iter
     
     %OMP for Coefficients estimate
@@ -61,6 +61,7 @@ for iter = 1:10
         
         rhs_term = zeros(p,1);
         norm_term = zeros(p,p);
+        yik_store = zeros(m,N);
         
         for i = 1:N
 
@@ -76,6 +77,7 @@ for iter = 1:10
 %             phi_t = reshape(phi(i,:,:),m,p);
             phi_t = phi_concat(:,(i-1)*p+1:i*p);
             yik = y(:,i) - phi_t*d_temp;
+            yik_store(:,i) = yik;
             yikt = yik * sparse_codes(k,i);
 
             rhs_term = rhs_term + phi_t'*yikt;
@@ -85,8 +87,15 @@ for iter = 1:10
         
         k
         Dr(:,k) = inv(norm_term)*rhs_term;
-%         pause(1)
+        Dr(:,k) = Dr(:,k)/norm(Dr(:,k));
         
+        for i = 1:N
+            phi_t = phi_concat(:,(i-1)*p+1:i*p);
+            num = Dr(:,k)'*phi_t'*yik_store(:,i);
+            denom = Dr(:,k)'*phi_t'*phi_t*Dr(:,k);
+            sparse_codes(k,i) = num/denom;
+        end
+            
     end
     done = 1
     

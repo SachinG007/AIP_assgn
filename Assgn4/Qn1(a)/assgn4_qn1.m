@@ -1,7 +1,10 @@
+%Hyperparams
 N = 200;
 p = 100;
 K = 20;
-f = 0.001;
+f = 0.05;
+m = 50;
+
 D = normrnd(0,1,[p,K]);
 for k = 1:K
     D(:,k) = D(:,k)/norm(D(:,k));
@@ -14,7 +17,6 @@ for k = 1:N
 end
 
 sig = D*S;
-m = 90;
 
 phi = randi(2,N,m,p);
 phi(phi==2) = -1;
@@ -40,21 +42,26 @@ Dr = normrnd(0,1,[p,K]);
 %%
 for iter = 1:100
     iter
-
+    
+    %OMP for Coefficients estimate
     sparse_codes = zeros(K,N);
     for k = 1:N
         phi_t = reshape(phi(k,:,:),m,p);
         sparse_codes(:,k) = OMP2(phi_t*Dr,y(:,k),5);
     end
 
-    %
+    %Dictionary atom update
+    %for every dict column
     for k = 1:K
-
+        
+        
         rhs_term = zeros(p,1);
         norm_term = zeros(p,p);
+        yik_store = zeros(m,N);
+        
         for i = 1:N
 
-            %get yik
+            %get yik (yi_mius_k
             d_temp = zeros(p,1);
             for l = 1:K
                 if l~=k            
@@ -63,6 +70,7 @@ for iter = 1:100
             end
             phi_t = reshape(phi(i,:,:),m,p);
             yik = y(:,i) - phi_t*d_temp;
+            yik_store(:,i) = yik;
             yikt = yik * sparse_codes(k,i);
 
             rhs_term = rhs_term + phi_t'*yikt;
@@ -70,6 +78,15 @@ for iter = 1:100
 
         end
         Dr(:,k) = inv(norm_term)*rhs_term;
+        Dr(:,k) = Dr(:,k)/norm(Dr(:,k));
+        
+        for i = 1:N
+            phi_t = phi_concat(:,(i-1)*p+1:i*p);
+            num = Dr(:,k)'*phi_t'*yik_store(:,i);
+            denom = Dr(:,k)'*phi_t'*phi_t*Dr(:,k);
+            sparse_codes(k,i) = num/denom;
+        end
+        
     end
     done = 1
     
