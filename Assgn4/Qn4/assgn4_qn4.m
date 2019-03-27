@@ -1,9 +1,9 @@
 % rng(1)
 clear
 sparsity = 5;
-m = 70;
+m = 50;
 p = 256;
-frac = .5;
+frac = .8;
 
 %Produce f
 U = dctmtx(p);
@@ -11,14 +11,18 @@ U = dctmtx(p);
 s = zeros(64*4,1);
 idx = randi(64*4,sparsity,1);
 s(idx) = 1;
-f = U * s;
+% f = U * s;
+img = imread('img.jpg');
+img2 = im2double(img)
+f = reshape(img2,256,1);
+
 
 %sensing matrix same as qn1
 phi = randi(2,m,p);
 phi(phi==2) = -1;
 phi = phi/sqrt(m);
 
-sigma = 100 * mean(f);
+sigma = .1 * mean(f);
 noise = normrnd(0,sigma^2,[m,1]);
     
 %Ideal measured values
@@ -41,7 +45,7 @@ phi_new = phi(I,:);
 A = phi_new * U;
 A_org = phi*U;
 
-s_rec = OMP2( A, y_new, 10);
+s_rec = OMP2( A, y_new, 3);
 s_rec_nonsat = OMP2(A_org, y_ideal,sparsity);
 f_rec = U * s_rec;
 f_rec_nonsat = U * s_rec_nonsat ;

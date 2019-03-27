@@ -1,15 +1,19 @@
 %Hyperparams
 N = 600;
+Nt = 100;
 p = 16*16;
 K = 128;
 f = 0.01;
-m = 200;
+m = 180+40;
 [imgs labels] = readMNIST('train-images-idx3-ubyte', 'train-labels-idx1-ubyte', N,100);
-for k=1:9
-    sum(labels==k)
-end
+[test_imgs test_labels] = readMNIST('train-images-idx3-ubyte', 'train-labels-idx1-ubyte', Nt,700);
+% for k=1:9
+%     sum(labels==k)
+% end
 imgs = imresize(imgs, [16 16]);
 imgs = reshape(imgs,256,N);
+test_imgs = imresize(test_imgs, [16 16]);
+test_imgs = reshape(test_imgs,256,Nt);
 % a = reshape(imgs(:,4500),16,16)
 % imshow(a)
 %%
@@ -38,12 +42,19 @@ for k = 1:N
     y(:,k) = phi_t*imgs(:,k) + noise;
 end
 
+y_test = zeros(m,Nt);
+for k = 1:Nt
+    noise = normrnd(0,sigma^2,[m,1]);
+    phi_t = reshape(phi(k,:,:),m,p);
+    y_test(:,k) = phi_t*test_imgs(:,k) + noise;
+end
+
 done = 1
 
 
 Dr = normrnd(0,1,[p,K]);
 %%
-for iter = 1:30
+for iter = 1:20
     iter
     
     %OMP for Coefficients estimate
@@ -114,9 +125,45 @@ end
 
 %%
 Dr_img = reshape(Dr,16,16,1,K);
+Dr_img = Dr_img * 2;
 % imgs = reshape(imgs,16,16,1,N);
 montage(Dr_img)
 % done =1
 
-img = reshape(rec_signals(:,1000),16,16);
-imshow(img)
+% img = reshape(rec_signals(:,100),16,16);
+% imshow(img)
+
+%%
+%testing
+sparse_codes_test = zeros(K,Nt);
+for k = 1:Nt
+%         phi_t = reshape(phi(k,:,:),m,p);
+    phi_t = phi_concat(:,(k-1)*p+1:k*p);
+    sparse_codes_test(:,k) = OMP2(phi_t*Dr,y_test(:,k),40);
+end
+rec_signals_test = Dr * sparse_codes_test;
+
+test_img_store = zeros(16,16,1,20);
+for k = 1:20
+    test_img_store(:,:,:,k) = reshape(rec_signals_test(:,2*k),16,16,1);
+end
+% imshow(test_img)
+montage(test_img_store)
+rmse = 0;
+for k = 1:Nt
+    rmse = rmse + norm(rec_signals_test(:,k) - test_imgs(:,k))/norm(test_imgs(:,k));
+end
+rmse = rmse/Nt
+
+%%
+%Comparison with 2d DCT
+U = dctmtx(p);
+rmse_dct = 0;
+for k = 1:Nt
+    phi_t = reshape(phi(k,:,:),m,p);
+    A = phi_t*U;
+    img_rec_dct = U * OMP2( A, y_test(:,k), 40);
+    rmse_dct = rmse_dct + norm(img_rec_dct - test_imgs(:,k))/norm(test_imgs(:,k));
+end
+rmse = rmse_dct/Nt
+    
